@@ -80,8 +80,8 @@ if [ $UPDATE = "u" ]; then
     export HASHED_TFPASSWORD=$HASHED_TFPASSWORD
     export EMAIL=$EMAIL
     export USERNAME=$USERNAME
-    docker stack deploy -c traefik.yml traefik
-    docker stack deploy -c portainer.yml portainer
+    docker stack deploy -c traefik.yml primary_traefik
+    docker stack deploy -c portainer.yml primary_portainer
     docker swarm update --task-history-limit=4
     echo "Update (probably) complete... please visit https://traefik."$DOMAIN" and https://portainer."$DOMAIN
     echo "Exiting in a few seconds"
