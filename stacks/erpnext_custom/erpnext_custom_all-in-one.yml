@@ -15,9 +15,10 @@
 #    ```
 #    
 #Stack Environment Variables
-#    
-#ERPNEXT_VERSION=v13.8.0
-#FRAPPE_VERSION=v13.8.0
+#
+#ERPNEXT_VERSION=v13.9.2
+#FRAPPE_VERSION=v13.9.0
+#INSTALL_APPS=erpnext,posawesome,frappe_s3_attachment,metabase_integration,bookings,bench_manager
 #DOMAIN=subdomain.example.domain
 #NODE=manager, worker1, etc
 #STACK=name of this stack for traefik reference
@@ -31,14 +32,14 @@ version: '3.8'
 services:
 
   erpnext-worker-site:
-    image: frappe/erpnext-worker:${ERPNEXT_VERSION}
+    image: suodrazah/custom-erpnext-worker:${ERPNEXT_VERSION}
     networks:
       - internal-network
     command: new
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - SITE_NAME=${DOMAIN}
-      - INSTALL_APPS=erpnext
+      - INSTALL_APPS=${INSTALL_APPS}
       - MARIADB_HOST=${MARIADB_HOST}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
     depends_on:
@@ -66,7 +67,7 @@ services:
         - node.labels.$NODE == true
 
   erpnext-nginx:
-    image: frappe/erpnext-nginx:${ERPNEXT_VERSION}
+    image: suodrazah/custom-erpnext-nginx:${ERPNEXT_VERSION}
     networks:
       - internal-network
       - traefik-public
@@ -103,7 +104,7 @@ services:
         - "traefik.http.services.${STACK}.loadbalancer.server.port=80"
 
   erpnext-python:
-    image: frappe/erpnext-worker:${ERPNEXT_VERSION}
+    image: suodrazah/custom-erpnext-worker:${ERPNEXT_VERSION}
     networks:
       - internal-network
     environment:
@@ -138,7 +139,7 @@ services:
         - node.labels.$NODE == true
 
   frappe-worker-default:
-    image: frappe/erpnext-worker:${ERPNEXT_VERSION}
+    image: suodrazah/custom-erpnext-worker:${ERPNEXT_VERSION}
     networks:
       - internal-network
     command: worker
@@ -154,7 +155,7 @@ services:
         - node.labels.$NODE == true
 
   frappe-worker-short:
-    image: frappe/erpnext-worker:${ERPNEXT_VERSION}
+    image: suodrazah/custom-erpnext-worker:${ERPNEXT_VERSION}
     networks:
       - internal-network
     command: worker
@@ -172,7 +173,7 @@ services:
         - node.labels.$NODE == true
 
   frappe-worker-long:
-    image: frappe/erpnext-worker:${ERPNEXT_VERSION}
+    image: suodrazah/custom-erpnext-worker:${ERPNEXT_VERSION}
     networks:
       - internal-network
     command: worker
@@ -190,7 +191,7 @@ services:
         - node.labels.$NODE == true
 
   frappe-schedule:
-    image: frappe/erpnext-worker:${ERPNEXT_VERSION}
+    image: suodrazah/custom-erpnext-worker:${ERPNEXT_VERSION}
     networks:
       - internal-network
     command: schedule

@@ -17,7 +17,6 @@
 #This script is a work in development, I mean...look at it, if it was a beloved family pet I'd put it down.
 #Good luck
 
-
 export BRANCH=main
 
 read -p "Does this server have a domain that points at it, and ports 80 and 443 exposed? (Y/n): " PROCEED
@@ -43,12 +42,16 @@ echo "Traefik dashboard password?"
 #Prepare traefik password
 export "HASHED_TFPASSWORD=$(openssl passwd -apr1 $TFPASSWORD)"
 
-clear
+
+
+read -p "Do you want to encrypt communication between containers in the swarm? If you don't know what you are doing, select No (y/N): " ENCRYPT
+
+
 #Get ZeroTier config ready
 read -p "Zerotier Network ID? (Press enter to ignore): " ZEROTIER
 ZEROTIER=${ZEROTIER:-X}
 
-clear
+
 #Get authority
 echo "Configuring manager."DOMAIN" node"
 echo "Admin Email - "$EMAIL
@@ -66,7 +69,6 @@ fi
 if [ $ZEROTIER != "X" ]; then
     #Join zerotier network
     curl -s https://install.zerotier.com | sudo bash
-    clear
     sudo zerotier-cli join $ZEROTIER
     sleep 5
  fi
@@ -85,14 +87,23 @@ sudo timedatectl set-timezone $TIMEZONE
 curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
 rm get-docker.sh
 
-#Initiate Docker Swarm
-docker swarm init
+#Initiate Docker Swarm default on first IP
+WANIP=$(curl https://ipecho.net/plain)
+docker swarm init --advertise-addr $WANIP
+
 
 #Create traefik overlay networks
-docker network create --driver=overlay traefik-public
+ENCRYPT=${ENCRYPT:-N}
+if [ $ENCRYPT = "y" ]; then
+    docker network create --driver=overlay --opt encrypted traefik-public
+fi
+
+if [ $ENCRYPT = "N" ]; then
+    docker network create --driver=overlay traefik-public
+fi
 
 #Add label to this node so we can constrain traefik and portainer to it
-export NODE_ID=$(docker info -f '{{.Swarm.NodeID}}')
+export NODE_ID=$(sudo docker info -f '{{.Swarm.NodeID}}')
 docker node update --label-add manager=true $NODE_ID
 
 #Get traefik ready
@@ -109,16 +120,15 @@ export USERNAME=$USERNAME
 docker stack deploy -c traefik.yml manager_traefik
 docker stack deploy -c portainer.yml manager_portainer
 docker swarm update --task-history-limit=4
-clear
+
 echo "Deployment (probably) complete... please visit https://traefik."$DOMAIN" and https://portainer."$DOMAIN
-echo "Exiting in a few seconds"
+echo "Exiting in a few seconds - probably a good idea to reboot sometime"
 sleep 10
 
 #Clean up
 rm /home/$USER/deploy.sh
 rm /home/$USER/traefik.yml
 rm /home/$USER/portainer.yml
-clear
 
 #Done
 sleep 1
